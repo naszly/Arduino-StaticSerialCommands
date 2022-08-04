@@ -1,0 +1,32 @@
+# Datatypes (KEYWORD1)
+
+SerialCommands  KEYWORD1
+Command         KEYWORD1
+Arg             KEYWORD1
+ArgType         KEYWORD1
+Args            KEYWORD1
+
+
+# Methods and Functions (KEYWORD2)
+
+printCommand             KEYWORD2
+printCommandDescription  KEYWORD2
+listCommands             KEYWORD2
+listAllCommands          KEYWORD2
+readSerial               KEYWORD2
+getSerial                KEYWORD2
+getInt                   KEYWORD2
+getFloat                 KEYWORD2
+getString                KEYWORD2
+getType                  KEYWORD2
+
+
+# Preprocessor (KEYWORD3)
+
+COMMAND          KEYWORD3
+ARG              KEYWORD3
+SERIAL_COMMANDS  KEYWORD3
+
+
+# Constants (LITERAL1)
+
