@@ -117,7 +117,8 @@ void SerialCommands::parseCommand(char* string) {
   const Command* cmds = this->commands;
   uint16_t cmdsCount = commandsCount;
 
-  while ((token = getToken(&string)) != nullptr) {
+  token = getToken(&string);
+  while (token != nullptr) {
     cmd = findCommand(token, cmds, cmdsCount);
     if (cmd != nullptr) {
       impl::ArgConstraint argcs[MAX_ARGS];
@@ -164,6 +165,13 @@ void SerialCommands::parseCommand(char* string) {
           return;
         }
         cmd->runCommand(*this, args);
+      }
+
+      token = getToken(&string);
+
+      if (token == nullptr && cmds != nullptr) {
+        cmd->runCommand(*this, args);
+        return;
       }
 
     } else {
