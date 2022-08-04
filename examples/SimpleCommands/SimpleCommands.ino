@@ -8,6 +8,10 @@ Repository     : https://github.com/naszly/Arduino-StaticSerialCommands
 
 #define LED_PIN 13
 
+void cmd_help(SerialCommands& sender, Args& args) {
+    sender.listCommands();
+}
+
 void cmd_led_on(SerialCommands& sender, Args& args) {
   digitalWrite(LED_PIN, HIGH);
   sender.getSerial().println(F("Led is on"));
@@ -19,16 +23,23 @@ void cmd_led_off(SerialCommands& sender, Args& args) {
 }
 
 Command commands[] {
+  COMMAND(cmd_help, "help"),
   COMMAND(cmd_led_on, "on"),
   COMMAND(cmd_led_off, "off"),
 };
 
-SerialCommands serialCommands = SERIAL_COMMANDS(Serial, commands);
+SerialCommands serialCommands(Serial, commands, sizeof(commands) / sizeof(Command));
+
+// if default buffer size (64) is too small pass a buffer through constructor
+// char buffer[128];
+// SerialCommands serialCommands(Serial, commands, sizeof(commands) / sizeof(Command), buffer, sizeof(buffer));
 
 void setup() {
   Serial.begin(9600);
 
   pinMode(LED_PIN, OUTPUT);
+
+  serialCommands.listCommands();
 }
 
 void loop() {

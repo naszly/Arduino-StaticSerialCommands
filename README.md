@@ -1,9 +1,15 @@
 # StaticSerialCommands
-
-An Arduino library for parsing commands received over a serial port. Optimized for low dynamic memory usage, commands are stored in program memory. Typed arguments with strict input validation and friendly error messages. Commands can have subcommands.
+An Arduino library for parsing commands received over a serial port. Optimized for low dynamic memory usage, commands are stored in program memory.
+* Commands and arguments are separated by space.
+* A command must end with a new line or carriage return character.
+* Whitespaces are ignored when parsing a command.
+* Double quotation marks can be used to pass string argument with spaces.
+* Typed arguments with strict input validation.
+* Friendly error messages for invalid input.
+* Commands can have subcommands.
+* Methods to print out commands with syntax and description.
 
 ## Quickstart
-
 ```cpp
 #include "StaticSerialCommands.h"
 
@@ -25,10 +31,8 @@ void loop() {
   serialCommands.readSerial();
 }
 ```
-
 ## Commands
-
-COMMAND macro syntax:
+COMMAND macro is used to create Command object with data stored in program memory.
 ```cpp
 COMMAND(function, command)
 COMMAND(function, command, subcommands)
@@ -36,7 +40,8 @@ COMMAND(function, command, subcommands, description)
 COMMAND(function, command, arguments..., subcommands, description)
 ```
 ### Simple arguments
-Valid argument types: Int, Float, String
+Valid argument types: Int, Float, String \
+Maximum number of arguments is limited to 16.
 ```cpp
 void cmd_hello(SerialCommands& sender, Args& args) {
   sender.getSerial().print(F("Hello "));
@@ -53,19 +58,17 @@ Command commands[] {
   // if string argument contains space it should be inside quotation marks
   // for example: name "Firstname Lastname"
   COMMAND(cmd_hello, "name", ArgType::String, nullptr, ""),
-  COMMAND(cmd_multiply, "mul", ArgType::Int, ArgType::Int, nullptr, "multiplies two number"),
+  COMMAND(cmd_multiply, "mul", ArgType::Int, ArgType::Int, nullptr, "multiply two numbers"),
 };
 ```
-
 ### Custom arguments
-ARG macro syntax:
+ARG macro is used to specify command argument type, range (if type is numeric) and name.
 ```cpp
 ARG(type)
 ARG(type, name)
 ARG(type, min, max)
 ARG(type, min, max, name)
 ```
-
 ```cpp
 void cmd_led_on(SerialCommands& sender, Args& args) {
   auto pin = args[0].getInt();
@@ -90,15 +93,19 @@ Command commands[] {
   COMMAND(cmd_led_off, "off", ARG(ArgType::Int, 2, 13, "pin"), nullptr, "turn off the led on the given pin"),
 };
 ```
+If you want to declare argument constraint into a variable, mark it as `constexpr`:
+```cpp 
+constexpr auto argConstraint = ARG(ArgType::Int, 2, 13, "pin");
 
+Command commands[] {
+  COMMAND(cmd_led_on, "on", argConstraint, nullptr, "turn on the led on the given pin"),
+  COMMAND(cmd_led_off, "off", argConstraint, nullptr, "turn off the led on the given pin"),
+};
+```
 ### Subcommands
-```
-help - list commands
-calc <int> - calculator
-calc <int> + <int> - add numbers
-calc <int> * <int> - multiply numbers
-```
-
+An array of subcommands can only be passed to one command. \
+The sum of command arguments and subcommand arguments must be less than or equal to 16. \
+If the parent of subcommands has N arguments, the first N arguments of the subcommands will be the parent's arguments.
 ```cpp
 void cmd_help(SerialCommands& sender, Args& args);
 void cmd_calc(SerialCommands& sender, Args& args);
@@ -124,14 +131,61 @@ void cmd_calc(SerialCommands& sender, Args& args) {
 }
 
 void cmd_calc_add(SerialCommands& sender, Args& args) {
-  float number1 = args[0].getInt();
-  float number2 = args[1].getInt();
+  auto number1 = args[0].getInt();
+  auto number2 = args[1].getInt();
   sender.getSerial().println(number1 + number2);
 }
 
 void cmd_calc_mul(SerialCommands& sender, Args& args) {
-  float number1 = args[0].getInt();
-  float number2 = args[1].getInt();
+  auto number1 = args[0].getInt();
+  auto number2 = args[1].getInt();
   sender.getSerial().println(number1 * number2);
 }
+```
+Result:
+```
+help - list commands
+calc <int> - calculator
+calc <int> + <int> - add numbers
+calc <int> * <int> - multiply numbers
+```
+## SerialCommands methods
+public methods of SerialCommands class:
+```cpp
+// read serial port and parse command when new line is received
+// if parsing is successful, command function will be called
+// if parsing is unsuccessful, error message will be printed
+void readSerial();
+
+// get Serial object
+Stream& getSerial();
+
+// print the command syntax
+void printCommand(const Command& command);
+
+// print command description
+void printCommandDescription(const Command& command);
+
+// list all commands but not their subcommands
+void listCommands();
+void listCommands(const Command* commands, uint16_t commandsCount);
+
+// list all commands and their subcommands
+void listAllCommands();
+void listAllCommands(const Command* commands, uint16_t commandsCount);
+```
+## Custom buffer size
+Default buffer size is 64 bytes. \
+This buffer is used to store characters received over the serial port,
+and to read strings from program memory (command name, description and argument name). \
+The buffer must be large enough to:
+* receive the longest command
+* store the longest command name and the longest description.
+```cpp
+char buffer[128];
+SerialCommands serialCommands(
+  Serial,
+  commands, sizeof(commands) / sizeof(Command),
+  buffer, sizeof(buffer)
+);
 ```
