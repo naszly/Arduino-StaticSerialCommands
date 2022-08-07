@@ -55,8 +55,6 @@ void SerialCommands::listAllCommands(const Command* commands, uint16_t commandsC
     subcmds = nullptr;
     commands[i].getSubCommands(&subcmds, &subcmdCount);
     if (subcmds != nullptr) {
-      commands[i].getCommand(&buffer);
-
       listAllCommands(subcmds, subcmdCount);
     }
   }
