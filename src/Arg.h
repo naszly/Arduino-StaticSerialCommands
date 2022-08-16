@@ -45,7 +45,7 @@ Repository     : https://github.com/naszly/Arduino-StaticSerialCommands
         ARG_1(__VA_ARGS__) \
        )
 
-enum ArgType : uint8_t {
+enum class ArgType : uint8_t {
   Null,
   Int,
   Float,
@@ -113,7 +113,7 @@ struct Range {
 
 struct ArgConstraint {
   ArgConstraint()
-    : type(Null), getRangeFn(nullptr), getNameFn(nullptr) {}
+    : type(ArgType::Null), getRangeFn(nullptr), getNameFn(nullptr) {}
 
   constexpr ArgConstraint(ArgType type)
     : type(type), getRangeFn(nullptr), getNameFn(nullptr) {}
@@ -143,9 +143,9 @@ struct ArgConstraint {
     if (getRangeFn) {
       Range range = (*getRangeFn)();
       switch (arg.getType()) {
-        case Int:
+        case ArgType::Int:
           return arg.getInt() >= range.minimum && arg.getInt() <= range.maximum;
-        case Float:
+        case ArgType::Float:
           return arg.getFloat() >= range.minimum && arg.getFloat() <= range.maximum;
         default:
           return true;
@@ -167,7 +167,7 @@ struct ArgConstraint {
     static const char _float[] PROGMEM = "float";
     static const char _string[] PROGMEM = "string";
     static const char* const types[] PROGMEM{ _null, _int, _float, _string };
-    strcpy_P(*buffer, (char*)pgm_read_word(&(types[type])));
+    strcpy_P(*buffer, (char*)pgm_read_word(&(types[(int)type])));
   }
 
   template<char... chars>
@@ -180,7 +180,7 @@ struct ArgConstraint {
   static Range getRange() {
     return Range(min, max);
   }
-  
+
 };
 
 }
