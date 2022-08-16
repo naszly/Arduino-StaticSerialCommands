@@ -4,8 +4,8 @@ License        : BSD
 Repository     : https://github.com/naszly/Arduino-StaticSerialCommands
 -----------------------------------------------------------------------*/
 
-#ifndef ARG_H
-#define ARG_H
+#ifndef STATIC_SERIAL_COMMANDS_ARG_H
+#define STATIC_SERIAL_COMMANDS_ARG_H
 
 #include "Arduino.h"
 
@@ -185,4 +185,4 @@ struct ArgConstraint {
 
 }
 
-#endif
+#endif // STATIC_SERIAL_COMMANDS_ARG_H

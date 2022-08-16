@@ -4,8 +4,8 @@ License        : BSD
 Repository     : https://github.com/naszly/Arduino-StaticSerialCommands
 -----------------------------------------------------------------------*/
 
-#ifndef COMMAND_BUILDER_H
-#define COMMAND_BUILDER_H
+#ifndef STATIC_SERIAL_COMMANDS_COMMAND_BUILDER_H
+#define STATIC_SERIAL_COMMANDS_COMMAND_BUILDER_H
 
 #define _COMMAND(function, command, subcommands, description, argsCount, ...) \
   impl::Command<sizeof(command), sizeof(description), argsCount> { \
@@ -146,4 +146,5 @@ Repository     : https://github.com/naszly/Arduino-StaticSerialCommands
               COMMAND_3(__VA_ARGS__), \
               COMMAND_2(__VA_ARGS__) \
              )
-#endif
+
+#endif // STATIC_SERIAL_COMMANDS_COMMAND_BUILDER_H

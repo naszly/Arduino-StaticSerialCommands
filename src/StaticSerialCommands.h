@@ -4,8 +4,8 @@ License        : BSD
 Repository     : https://github.com/naszly/Arduino-StaticSerialCommands
 -----------------------------------------------------------------------*/
 
-#ifndef SERIAL_COMMANDS_H
-#define SERIAL_COMMANDS_H
+#ifndef STATIC_SERIAL_COMMANDS_H
+#define STATIC_SERIAL_COMMANDS_H
 
 #include <Arduino.h>
 #include "Command.h"
@@ -75,4 +75,4 @@ class SerialCommands {
 
 };
 
-#endif
+#endif // STATIC_SERIAL_COMMANDS_H

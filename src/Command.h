@@ -4,8 +4,8 @@ License        : BSD
 Repository     : https://github.com/naszly/Arduino-StaticSerialCommands
 -----------------------------------------------------------------------*/
 
-#ifndef COMMAND_H
-#define COMMAND_H
+#ifndef STATIC_SERIAL_COMMANDS_COMMAND_H
+#define STATIC_SERIAL_COMMANDS_COMMAND_H
 
 #include <Arduino.h>
 #include "CommandBuilder.h"
@@ -103,4 +103,4 @@ class Command {
     const impl::Command<>* parent;
 };
 
-#endif
+#endif // STATIC_SERIAL_COMMANDS_COMMAND_H

@@ -4,8 +4,8 @@ License        : BSD
 Repository     : https://github.com/naszly/Arduino-StaticSerialCommands
 -----------------------------------------------------------------------*/
 
-#ifndef PARSE_H
-#define PARSE_H
+#ifndef STATIC_SERIAL_COMMANDS_PARSE_H
+#define STATIC_SERIAL_COMMANDS_PARSE_H
 
 #include <Arduino.h>
 
@@ -56,4 +56,4 @@ bool strtof(const char* str, float* out) {
 
 }
 
-#endif
+#endif // STATIC_SERIAL_COMMANDS_PARSE_H
