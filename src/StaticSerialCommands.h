@@ -19,13 +19,14 @@ Repository     : https://github.com/naszly/Arduino-StaticSerialCommands
 
 class SerialCommands {
   public:
-    SerialCommands(Stream& serial, const Command* commands, uint16_t commandsCount, char* buffer, uint16_t bufferSize)
+    SerialCommands(Stream& serial, const Command* commands, uint16_t commandsCount, char* buffer, uint16_t bufferSize, uint16_t timeout = 0)
       : serial(serial), buffer(buffer), bufferSize(bufferSize),
-        commands(commands), commandsCount(commandsCount) {}
+        commands(commands), commandsCount(commandsCount),
+        timeout(timeout) {}
 
     SerialCommands(Stream& serial, const Command* commands, uint16_t commandsCount)
       : serial(serial),
-        commands(commands), commandsCount(commandsCount) {
+        commands(commands), commandsCount(commandsCount), timeout(0) {
       static char buffer[64];
       this->buffer = buffer;
       bufferSize = sizeof(buffer);
@@ -63,6 +64,7 @@ class SerialCommands {
     uint16_t bufferSize;
     const Command* commands;
     const uint16_t commandsCount;
+    const uint16_t timeout;
 
     const Command* findCommand(const char* const string, const Command* commands, uint16_t commandsCount);
     void parseCommand(char* string);

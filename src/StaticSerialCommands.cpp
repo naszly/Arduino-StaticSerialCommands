@@ -62,8 +62,14 @@ void SerialCommands::listAllCommands(const Command* commands, uint16_t commandsC
 
 void SerialCommands::readSerial() {
   static uint16_t index = 0;
+  static uint64_t lastTime = millis();
+
+  if (timeout != 0 && lastTime + timeout < millis()) {
+    index = 0;
+  }
 
   while (serial.available() > 0) {
+    lastTime = millis();
     int ch = serial.read();
     if (ch == term1 || ch == term2) {
       if (index > 0) {
