@@ -68,7 +68,7 @@ void SerialCommands::readSerial() {
   while (serial.available() > 0) {
     lastTime = millis();
     int ch = serial.read();
-    if (ch == term1 || ch == term2) {
+    if (isTerm(ch)) {
       if (index > 0) {
         buffer[index] = '\0';
         parseCommand(buffer);
@@ -184,23 +184,24 @@ char* SerialCommands::getToken(char** stringp) {
   if (begin == nullptr)
     return nullptr;
 
-  while (*begin == delim) begin++;
+  while (isDelim(*begin)) begin++;
 
-  if (*begin == quotation) {
+  if (isQuotation(*begin)) {
+    const char quote = *begin;
     begin++;
     end = begin;
-    while (*end != quotation && *end != '\0') end++;
+    while (*end != quote && *end != '\0') end++;
 
-    if (*end == quotation) {
+    if (*end == quote) {
       *end = '\0';
       end++;
     }
   } else {
     end = begin;
-    while (*end != delim && *end != '\0') end++;
+    while (!isDelim(*end) && *end != '\0') end++;
   }
 
-  while (*end == delim) {
+  while (isDelim(*end)) {
     *end = '\0';
     end++;
   }

@@ -1,13 +1,12 @@
 # StaticSerialCommands
-An Arduino library for parsing commands received over a serial port. Optimized for low dynamic memory usage, commands are stored in program memory.
-* Commands and arguments are separated by space.
-* A command must end with a new line or carriage return character.
-* Whitespaces are ignored when parsing a command.
-* Double quotation marks can be used to pass string argument with spaces.
-* Typed arguments with strict input validation.
+An Arduino library that allows you to parse commands received over a serial port. It is optimized for low dynamic memory usage by storing commands in program memory.
+* Typed arguments with strict input validation. Valid argument types: Int, Float, String.
 * Friendly error messages for invalid input.
+* Customizable delimiter character, default is `SPACE`.
+* Customizable terminator character, default is `NL` & `CR`.
+* Quotation marks can be used to escape delimiter character. Customizable, default is `"` (double quote).
 * Commands can have subcommands.
-* Methods to print out commands with syntax and description.
+* Methods to list commands with syntax and description.
 
 ## Quickstart
 ```cpp
@@ -173,6 +172,22 @@ void listCommands(const Command* commands, uint16_t commandsCount);
 // list all commands and their subcommands
 void listAllCommands();
 void listAllCommands(const Command* commands, uint16_t commandsCount);
+
+// set delimiter characters
+// usage: setDelimiterChars<' ', '\t'>();
+template<char... chars>
+void setDelimiterChars();
+
+// set termination characters
+// usage: setTerminationChars<'\r', '\n', ';'>();
+template<char... chars>
+void setTerminationChars();
+
+// set quotation characters
+// usage: setQuotationChars<'"'>();
+template<char... chars>
+void setQuotationChars();
+
 ```
 ## Custom buffer size
 Default buffer size is 64 bytes. \
