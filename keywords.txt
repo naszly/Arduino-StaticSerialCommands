@@ -14,6 +14,12 @@ printCommandDescription  KEYWORD2
 listCommands             KEYWORD2
 listAllCommands          KEYWORD2
 readSerial               KEYWORD2
+setDelimiterChars        KEYWORD2
+setQuotationChars        KEYWORD2
+setTerminationChars      KEYWORD2
+setDelimiterPredicate    KEYWORD2
+setQuotationPredicate    KEYWORD2
+setTerminationPredicate  KEYWORD2
 getSerial                KEYWORD2
 getInt                   KEYWORD2
 getFloat                 KEYWORD2
