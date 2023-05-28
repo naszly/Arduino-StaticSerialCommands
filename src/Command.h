@@ -17,9 +17,9 @@ namespace impl {
   
 template<uint8_t commandLength = 0, uint16_t descriptionLength = 0, uint8_t argCount = 0>
 struct Command {
-  void (*getCommand)(const void*, char**);
-  void (*getDescription)(const void*, char**);
-  void (*getArgs)(const void*, ArgConstraint**, uint8_t*);
+  PGM_P (*getCommandPgmFn)(PGM_VOID_P);
+  PGM_P (*getDescriptionPgmFn)(PGM_VOID_P);
+  const impl::ArgConstraint* (*getArgsPgmFn)(PGM_VOID_P, uint8_t*);
   void (*function)(SerialCommands&, Args&);
   const void* subcommands;
   const uint16_t subcommandsCount;
@@ -27,26 +27,17 @@ struct Command {
   const char description[descriptionLength];
   const ArgConstraint args[argCount];
 
-  static void _getCommand(const void* cmdPtr, char** buffer) {
-    memcpy_P(
-      *buffer,
-      ((const Command<commandLength, descriptionLength, argCount>*)cmdPtr)->command,
-      commandLength);
+  static PGM_P _getCommandPgm(PGM_VOID_P cmdPtr) {
+    return ((const Command<commandLength, descriptionLength, argCount>*)cmdPtr)->command;
   }
 
-  static void _getDescription(const void* cmdPtr, char** buffer) {
-    memcpy_P(
-      *buffer,
-      ((const Command<commandLength, descriptionLength, argCount>*)cmdPtr)->description,
-      descriptionLength);
+  static PGM_P _getDescriptionPgm(PGM_VOID_P cmdPtr) {
+    return ((const Command<commandLength, descriptionLength, argCount>*)cmdPtr)->description;
   }
 
-  static void _getArgs(const void* cmdPtr, ArgConstraint** args, uint8_t* count) {
-    memcpy_P(
-      *args,
-      ((const Command<commandLength, descriptionLength, argCount>*)cmdPtr)->args,
-      argCount * sizeof(ArgConstraint));
+  static const impl::ArgConstraint* _getArgsPgm(PGM_VOID_P cmdPtr, uint8_t* count) {
     *count = argCount;
+    return ((const Command<commandLength, descriptionLength, argCount>*)cmdPtr)->args;
   }
 };
 }
@@ -59,19 +50,19 @@ class Command {
     constexpr Command(const void* command, const void* parent)
       : _command((const impl::Command<>*)command), parent((const impl::Command<>*)parent) {}
 
-    void getCommand(char** buffer) const {
-      void (*_getCommand)(const void*, char**) = pgm_read_word(&(_command->getCommand));
-      (*_getCommand)(_command, buffer);
+    PGM_P getCommandPgm() const {
+      PGM_P (*_getCommandPgmFn)(PGM_VOID_P) = pgm_read_word(&(_command->getCommandPgmFn));
+      return (*_getCommandPgmFn)(_command);
     }
 
-    void getDescription(char** buffer) const {
-      void (*_getDescription)(const void*, char**) = pgm_read_word(&(_command->getDescription));
-      (*_getDescription)(_command, buffer);
+    PGM_P getDescriptionPgm() const {
+      PGM_P (*_getDescriptionPgmFn)(PGM_VOID_P) = pgm_read_word(&(_command->getDescriptionPgmFn));
+      return (*_getDescriptionPgmFn)(_command);
     }
 
-    void getArgs(impl::ArgConstraint** args, uint8_t* count) const {
-      void (*_getArgs)(const void*, impl::ArgConstraint**, uint8_t*) = pgm_read_word(&(_command->getArgs));
-      (*_getArgs)(_command, args, count);
+    const impl::ArgConstraint* getArgsPgm(uint8_t* count) const {
+      impl::ArgConstraint* (*_getArgsPgmFn)(PGM_VOID_P, uint8_t*) = pgm_read_word(&(_command->getArgsPgmFn));
+      return (*_getArgsPgmFn)(_command, count);
     }
 
     void runCommand(SerialCommands &sender, Args &args) const {

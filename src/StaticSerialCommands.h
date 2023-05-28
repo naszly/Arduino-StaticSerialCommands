@@ -73,6 +73,7 @@ class SerialCommands {
 
     bool getArg(Arg& out, const char* string, const impl::ArgConstraint& arg);
 
+    void printFromPgm(PGM_P str);
 };
 
 #endif // STATIC_SERIAL_COMMANDS_H

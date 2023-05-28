@@ -13,25 +13,22 @@ void SerialCommands::printCommand(const Command& command) {
     serial.print(' ');
   }
 
-  command.getCommand(&buffer);
-  serial.print(buffer);
+  printFromPgm(command.getCommandPgm());
 
-  impl::ArgConstraint argcs[MAX_ARGS];
-  impl::ArgConstraint* ptr = argcs;
   uint8_t count = 0;
-  command.getArgs(&ptr, &count);
+  const impl::ArgConstraint* argcs = command.getArgsPgm(&count);
+  impl::ArgConstraint argc;
   for (uint16_t j = 0; j < count; ++j) {
-    argcs[j].getName(&buffer);
+    memcpy_P(&argc, &argcs[j], sizeof(impl::ArgConstraint));
     serial.print(' ');
     serial.print('<');
-    serial.print(buffer);
+    printFromPgm(argc.getNamePgm());
     serial.print('>');
   }
 }
 
 void SerialCommands::printCommandDescription(const Command& command) {
-  command.getDescription(&buffer);
-  serial.print(buffer);
+  printFromPgm(command.getDescriptionPgm());
 }
 
 void SerialCommands::listCommands(const Command* commands, uint16_t commandsCount) {
@@ -74,13 +71,7 @@ void SerialCommands::readSerial() {
     if (ch == term1 || ch == term2) {
       if (index > 0) {
         buffer[index] = '\0';
-        char* string = strdup(buffer);
-        if (string != nullptr) {
-          parseCommand(string);
-          free(string);
-        } else {
-          serial.println(F("ERROR: Out of memory"));
-        }
+        parseCommand(buffer);
         index = 0;
       }
     } else if (index < bufferSize) {
@@ -98,10 +89,10 @@ const Command* SerialCommands::findCommand(const char* const string, const Comma
   uint16_t index;
   uint16_t count = 0;
   for (uint16_t i = 0; i < commandsCount; ++i) {
-    commands[i].getCommand(&buffer);
-    if (memcmp(buffer, string, len + 1) == 0)
+    PGM_P cmd = commands[i].getCommandPgm();
+    if (memcmp_P(string, cmd, len + 1) == 0)
       return &commands[i];
-    if (memcmp(buffer, string, len) == 0) {
+    if (memcmp_P(string, cmd, len) == 0) {
       ++count;
       index = i;
     }
@@ -125,12 +116,12 @@ void SerialCommands::parseCommand(char* string) {
   while (token != nullptr) {
     cmd = findCommand(token, cmds, cmdsCount);
     if (cmd != nullptr) {
-      impl::ArgConstraint argcs[MAX_ARGS];
-      impl::ArgConstraint* ptr = argcs;
-      cmd->getArgs(&ptr, &argCount);
+      const impl::ArgConstraint* argcs = cmd->getArgsPgm(&argCount);
+      impl::ArgConstraint argc;
       for (i = 0; i < argCount; ++i) {
+        memcpy_P(&argc, &argcs[i], sizeof(impl::ArgConstraint));
         if ((token = getToken(&string)) != nullptr) {
-          if (!getArg(args[argIndex], token, argcs[i])) {
+          if (!getArg(args[argIndex], token, argc)) {
             serial.print(F("ERROR: Can't parse argument "));
             serial.println(argIndex + 1);
             printCommand(*cmd);
@@ -138,10 +129,10 @@ void SerialCommands::parseCommand(char* string) {
             return;
           }
           
-          if (!argcs[i].isInRange(args[argIndex])) {
+          if (!argc.isInRange(args[argIndex])) {
             serial.print(F("ERROR: Argument out of range "));
             serial.print(argIndex + 1);
-            impl::Range range = argcs[i].getRange();
+            impl::Range range = argc.getRange();
             serial.print(F(" ("));
             serial.print(range.minimum);
             serial.print(F(" - "));
@@ -251,4 +242,8 @@ bool SerialCommands::getArg(Arg& out, const char* string, const impl::ArgConstra
       break;
   }
   return false;
+}
+
+void SerialCommands::printFromPgm(PGM_P str) {
+  serial.print(reinterpret_cast<const __FlashStringHelper *>(str));
 }

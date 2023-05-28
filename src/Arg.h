@@ -6,8 +6,7 @@ Repository     : https://github.com/naszly/Arduino-StaticSerialCommands
 
 #ifndef STATIC_SERIAL_COMMANDS_ARG_H
 #define STATIC_SERIAL_COMMANDS_ARG_H
-
-#include "Arduino.h"
+#include <Arduino.h>
 
 #define MAX_ARGS 16
 
@@ -27,13 +26,13 @@ Repository     : https://github.com/naszly/Arduino-StaticSerialCommands
   impl::ArgConstraint(type)
 
 #define ARG_2(type, name) \
-  impl::ArgConstraint(type, impl::ArgConstraint::getName<GET_STR(name)>)
+  impl::ArgConstraint(type, impl::ArgConstraint::getNamePgm<GET_STR(name)>)
 
 #define ARG_3(type, min, max) \
   impl::ArgConstraint(type, impl::ArgConstraint::getRange<min,max>)
 
 #define ARG_4(type, min, max, name) \
-  impl::ArgConstraint(type, impl::ArgConstraint::getRange<min,max>, impl::ArgConstraint::getName<GET_STR(name)>)
+  impl::ArgConstraint(type, impl::ArgConstraint::getRange<min,max>, impl::ArgConstraint::getNamePgm<GET_STR(name)>)
 
 #define ARG_X(a0, a1, a2, a3, a4, FUNC, ...)  FUNC
 
@@ -113,29 +112,29 @@ struct Range {
 
 struct ArgConstraint {
   ArgConstraint()
-    : type(ArgType::Null), getRangeFn(nullptr), getNameFn(nullptr) {}
+    : type(ArgType::Null), getRangeFn(nullptr), getNamePgmFn(nullptr) {}
 
-  constexpr ArgConstraint(ArgType type)
-    : type(type), getRangeFn(nullptr), getNameFn(nullptr) {}
+  constexpr ArgConstraint(const ArgType type)
+    : type(type), getRangeFn(nullptr), getNamePgmFn(nullptr) {}
 
-  constexpr ArgConstraint(ArgType type,  Range (*getRangeFn)())
-    : type(type), getRangeFn(getRangeFn), getNameFn(nullptr) {}
+  constexpr ArgConstraint(const ArgType type, Range (*getRangeFn)())
+    : type(type), getRangeFn(getRangeFn), getNamePgmFn(nullptr) {}
 
-  constexpr ArgConstraint(ArgType type, void (*getNameFn)(char**))
-    : type(type), getRangeFn(nullptr), getNameFn(getNameFn) {}
+  constexpr ArgConstraint(const ArgType type, PGM_P (*getNamePgmFn)())
+    : type(type), getRangeFn(nullptr), getNamePgmFn(getNamePgmFn) {}
 
-  constexpr ArgConstraint(ArgType type,  Range (*getRangeFn)(), void (*getNameFn)(char**))
-    : type(type), getRangeFn(getRangeFn), getNameFn(getNameFn) {}
+  constexpr ArgConstraint(const ArgType type, Range (*getRangeFn)(), PGM_P (*getNamePgmFn)())
+    : type(type), getRangeFn(getRangeFn), getNamePgmFn(getNamePgmFn) {}
 
   const ArgType type;
   Range (*getRangeFn)();
-  void (*getNameFn)(char**);
+  PGM_P (*getNamePgmFn)();
 
-  void getName(char** buffer) const {
-    if (getNameFn) {
-      (*getNameFn)(buffer);
+  PGM_P getNamePgm() const {
+    if (getNamePgmFn) {
+      return (*getNamePgmFn)();
     } else {
-      getTypeName(type, buffer);
+      return getTypeNamePgm(type);
     }
   }
 
@@ -161,19 +160,19 @@ struct ArgConstraint {
     return Range(INT32_MIN, INT32_MAX);
   }
 
-  static void getTypeName(ArgType type, char** buffer) {
+  static PGM_P getTypeNamePgm(ArgType type) {
     static const char _null[] PROGMEM = "null";
     static const char _int[] PROGMEM = "int";
     static const char _float[] PROGMEM = "float";
     static const char _string[] PROGMEM = "string";
     static const char* const types[] PROGMEM{ _null, _int, _float, _string };
-    strcpy_P(*buffer, (char*)pgm_read_word(&(types[(int)type])));
+    return (PGM_P) pgm_read_word(&(types[(int) type]));
   }
 
   template<char... chars>
-  static void getName(char** buffer) {
-    static const char str[] PROGMEM = { chars... };
-    strcpy_P(*buffer, str);
+  static PGM_P getNamePgm() {
+    static const char _name[] PROGMEM = { chars... };
+    return _name;
   }
 
   template<int32_t min, int32_t max>

@@ -176,11 +176,7 @@ void listAllCommands(const Command* commands, uint16_t commandsCount);
 ```
 ## Custom buffer size
 Default buffer size is 64 bytes. \
-This buffer is used to store characters received over the serial port,
-and to read strings from program memory (command name, description and argument name). \
-The buffer must be large enough to:
-* receive the longest command
-* store the longest command name and the longest description.
+The buffer should be large enough to receive the longest command
 ```cpp
 char buffer[128];
 SerialCommands serialCommands(

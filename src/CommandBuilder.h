@@ -9,9 +9,9 @@ Repository     : https://github.com/naszly/Arduino-StaticSerialCommands
 
 #define _COMMAND(function, command, subcommands, description, argsCount, ...) \
   impl::Command<sizeof(command), sizeof(description), argsCount> { \
-    impl::Command<sizeof(command), sizeof(description), argsCount>::_getCommand, \
-    impl::Command<sizeof(command), sizeof(description), argsCount>::_getDescription, \
-    impl::Command<sizeof(command), sizeof(description), argsCount>::_getArgs, \
+    impl::Command<sizeof(command), sizeof(description), argsCount>::_getCommandPgm, \
+    impl::Command<sizeof(command), sizeof(description), argsCount>::_getDescriptionPgm, \
+    impl::Command<sizeof(command), sizeof(description), argsCount>::_getArgsPgm, \
     function, \
     subcommands, \
     sizeof(subcommands) / sizeof(Command), \
