@@ -39,6 +39,11 @@ SerialCommands serialCommands(Serial, commands, sizeof(commands) / sizeof(Comman
 void setup() {
     Serial.begin(9600);
 
+    // customize delimiter, termination and quotation characters
+    // serialCommands.setDelimiterChars<' ', '\t'>();
+    // serialCommands.setTerminationChars<'\n', '\r', ';'>();
+    // serialCommands.setQuotationChars<'"', '\''>();
+
     serialCommands.listAllCommands();
 }
 

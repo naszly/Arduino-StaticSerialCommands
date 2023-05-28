@@ -39,6 +39,11 @@ void setup() {
 
   pinMode(LED_PIN, OUTPUT);
 
+  // customize delimiter, termination and quotation characters
+  // serialCommands.setDelimiterChars<' ', '\t'>();
+  // serialCommands.setTerminationChars<'\n', '\r', ';'>();
+  // serialCommands.setQuotationChars<'"', '\''>();
+
   serialCommands.listCommands();
 }
 

@@ -82,6 +82,11 @@ void setup() {
   for (int i = START_PIN; i <= END_PIN; i++)
     pinMode(i, OUTPUT);
 
+  // customize delimiter, termination and quotation characters
+  // serialCommands.setDelimiterChars<' ', '\t'>();
+  // serialCommands.setTerminationChars<'\n', '\r', ';'>();
+  // serialCommands.setQuotationChars<'"', '\''>();
+
   serialCommands.listCommands();
 }
 
