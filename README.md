@@ -2,8 +2,8 @@
 An Arduino library that allows you to parse commands received over a serial port. It is optimized for low dynamic memory usage by storing commands in program memory.
 * Typed arguments with strict input validation. Valid argument types: Int, Float, String.
 * Friendly error messages for invalid input.
-* Customizable delimiter character, default is `SPACE`.
-* Customizable terminator character, default is `NL` & `CR`.
+* Customizable delimiter character(s), default is `SPACE`.
+* Customizable termination character(s), default is `NL` & `CR`.
 * Quotation marks can be used to escape delimiter character. Customizable, default is `"` (double quote).
 * Commands can have subcommands.
 * Methods to list commands with syntax and description.
@@ -149,45 +149,73 @@ calc <int> + <int> - add numbers
 calc <int> * <int> - multiply numbers
 ```
 ## SerialCommands methods
-public methods of SerialCommands class:
+Public methods of SerialCommands class:
+
+Read serial port and parse command when new line is received \
+If parsing is successful, command function will be called \
+If parsing is unsuccessful, error message will be printed
 ```cpp
-// read serial port and parse command when new line is received
-// if parsing is successful, command function will be called
-// if parsing is unsuccessful, error message will be printed
 void readSerial();
-
-// get Serial object
+```
+\
+Get Serial object
+```cpp
 Stream& getSerial();
-
-// print the command syntax
+```
+\
+Print the command syntax
+```cpp
 void printCommand(const Command& command);
-
-// print command description
+```
+\
+Print command description
+```cpp
 void printCommandDescription(const Command& command);
-
-// list all commands but not their subcommands
+```
+\
+List all commands but not their subcommands
+```cpp
 void listCommands();
 void listCommands(const Command* commands, uint16_t commandsCount);
-
-// list all commands and their subcommands
+```
+\
+List all commands and their subcommands
+```cpp
 void listAllCommands();
 void listAllCommands(const Command* commands, uint16_t commandsCount);
-
-// set delimiter characters
-// usage: setDelimiterChars<' ', '\t'>();
+```
+\
+Set delimiter characters
+```cpp
 template<char... chars>
 void setDelimiterChars();
-
-// set termination characters
-// usage: setTerminationChars<'\r', '\n', ';'>();
+```
+Usage:
+```cpp
+setDelimiterChars<' '>(); // default delimiter is space
+setDelimiterChars<' ', '\t', '\r', '\n'>(); // space, tab, carriage return and new line
+```
+\
+Set termination characters
+```cpp
 template<char... chars>
 void setTerminationChars();
-
-// set quotation characters
-// usage: setQuotationChars<'"'>();
+```
+Usage:
+```cpp
+setTerminationChars<'\r', '\n'>(); // default termination characters are carriage return and new line
+setTerminationChars<'\r', '\n', ';'>(); // carriage return, new line and semicolon
+```
+\
+Set quotation characters
+```cpp
 template<char... chars>
 void setQuotationChars();
-
+```
+Usage:
+```cpp
+setQuotationChars<'"'>(); // default quotation character is double quote
+setQuotationChars<'"', '\''>(); // double quote and single quote
 ```
 ## Custom buffer size
 Default buffer size is 64 bytes. \
@@ -198,5 +226,20 @@ SerialCommands serialCommands(
   Serial,
   commands, sizeof(commands) / sizeof(Command),
   buffer, sizeof(buffer)
+);
+```
+
+## Timeout
+
+If the command is not received within the specified time, the buffer will be cleared and the command will be ignored. \
+By default, timeout is disabled. \
+To enable timeout, pass timeout value in milliseconds to the constructor.
+```cpp
+char buffer[64];
+SerialCommands serialCommands(
+  Serial,
+  commands, sizeof(commands) / sizeof(Command),
+  buffer, sizeof(buffer),
+  1000 // 1 second
 );
 ```
