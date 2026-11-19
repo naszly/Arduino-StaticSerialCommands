@@ -122,70 +122,71 @@ void SerialCommands::parseCommand(char* string) {
   token = getToken(&string);
   while (token != nullptr) {
     cmd = findCommand(token, cmds, cmdsCount);
-    if (cmd != nullptr) {
-      const impl::ArgConstraint* argcs = cmd->getArgsPgm(&argCount);
-      impl::ArgConstraint argc;
-      for (i = 0; i < argCount; ++i) {
-        memcpy_P(&argc, &argcs[i], sizeof(impl::ArgConstraint));
-        if ((token = getToken(&string)) != nullptr) {
-          if (!getArg(args[argIndex], token, argc)) {
-            serial.print(F("ERROR: Can't parse argument "));
-            serial.println(argIndex + 1);
-            printCommand(*cmd);
-            serial.println();
-            return;
-          }
-          
-          if (!argc.isInRange(args[argIndex])) {
-            serial.print(F("ERROR: Argument out of range "));
-            serial.print(argIndex + 1);
-            impl::Range range = argc.getRange();
-            serial.print(F(" ("));
-            if (argc.type == ArgType::Float) {
-              serial.print(range.floatRange.minimum);
-              serial.print(F(" - "));
-              serial.print(range.floatRange.maximum);
-            } else {
-              serial.print(range.intRange.minimum);
-              serial.print(F(" - "));
-              serial.print(range.intRange.maximum);
-            }
-            serial.println(')');
-            printCommand(*cmd);
-            serial.println();
-            return;
-          }
-          argIndex++;
-        } else {
-          serial.println(F("ERROR: Not enough arguments"));
-          printCommand(*cmd);
-          serial.println();
-          return;
-        }
-      }
-      cmd->getSubCommands(&cmds, &cmdsCount);
-
-      if (cmds == nullptr) {
-        if ((token = getToken(&string)) != nullptr) {
-          serial.println(F("ERROR: Too many arguments"));
-          printCommand(*cmd);
-          serial.println();
-          return;
-        }
-        cmd->runCommand(*this, args);
-      }
-
-      token = getToken(&string);
-
-      if (token == nullptr && cmds != nullptr) {
-        cmd->runCommand(*this, args);
-        return;
-      }
-
-    } else {
+    if (cmd == nullptr) {
       serial.print(F("ERROR: Command does not exist \""));
       serial.print(token);
       serial.println('"');
+      return;
+    }
+
+    const impl::ArgConstraint* argcs = cmd->getArgsPgm(&argCount);
+    impl::ArgConstraint argc;
+    for (i = 0; i < argCount; ++i) {
+      memcpy_P(&argc, &argcs[i], sizeof(impl::ArgConstraint));
+      token = getToken(&string);
+      if (token == nullptr) {
+        serial.println(F("ERROR: Not enough arguments"));
+        printCommand(*cmd);
+        serial.println();
+        return;
+      }
+
+      if (!getArg(args[argIndex], token, argc)) {
+        serial.print(F("ERROR: Can't parse argument "));
+        serial.println(argIndex + 1);
+        printCommand(*cmd);
+        serial.println();
+        return;
+      }
+
+      if (!argc.isInRange(args[argIndex])) {
+        serial.print(F("ERROR: Argument out of range "));
+        serial.print(argIndex + 1);
+        impl::Range range = argc.getRange();
+        serial.print(F(" ("));
+        if (argc.type == ArgType::Float) {
+          serial.print(range.floatRange.minimum);
+          serial.print(F(" - "));
+          serial.print(range.floatRange.maximum);
+        } else {
+          serial.print(range.intRange.minimum);
+          serial.print(F(" - "));
+          serial.print(range.intRange.maximum);
+        }
+        serial.println(')');
+        printCommand(*cmd);
+        serial.println();
+        return;
+      }
+      argIndex++;
+    }
+
+    cmd->getSubCommands(&cmds, &cmdsCount);
+    token = getToken(&string);
+
+    if (cmds == nullptr) {
+      if (token != nullptr) {
+        serial.println(F("ERROR: Too many arguments"));
+        printCommand(*cmd);
+        serial.println();
+        return;
+      }
+      cmd->runCommand(*this, args);
+      return;
+    }
+
+    if (token == nullptr) {
+      cmd->runCommand(*this, args);
       return;
     }
   }
