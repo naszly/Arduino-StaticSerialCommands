@@ -8,6 +8,7 @@ Repository     : https://github.com/naszly/Arduino-StaticSerialCommands
 #define STATIC_SERIAL_COMMANDS_H
 
 #include <Arduino.h>
+#include <assert.h>
 #include "Command.h"
 
 #define SERIAL_COMMANDS(serial, commands) SerialCommands(serial, commands, sizeof(commands) / sizeof(Command))
@@ -24,7 +25,10 @@ class SerialCommands {
     SerialCommands(Stream& serial, const Command* commands, uint16_t commandsCount, char* buffer, uint16_t bufferSize, uint16_t timeout = 0)
       : serial(serial), buffer(buffer), bufferSize(bufferSize),
         commands(commands), commandsCount(commandsCount),
-        timeout(timeout) {}
+        timeout(timeout) {
+      assert(this->buffer != nullptr);
+      assert(this->bufferSize > 0);
+    }
 
     SerialCommands(Stream& serial, const Command* commands, uint16_t commandsCount)
       : serial(serial),
@@ -32,6 +36,7 @@ class SerialCommands {
       static char buffer[64];
       this->buffer = buffer;
       bufferSize = sizeof(buffer);
+      assert(this->bufferSize > 0);
     }
 
     void printCommand(const Command& command);

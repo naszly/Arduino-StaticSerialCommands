@@ -206,6 +206,28 @@ void test_reports_too_many_args() {
   ASSERT_TRUE(contains(out, "set <int>"));
 }
 
+void test_handles_small_buffer_boundary_safely() {
+  g_value = 0;
+  FakeStream stream;
+  char buffer[5];
+  Command commands[] = {
+    COMMAND(cmd_ping, "ping"),
+  };
+  SerialCommands serial(stream, commands, sizeof(commands) / sizeof(Command), buffer, sizeof(buffer));
+
+  stream.feed("ping\n");
+  serial.readSerial();
+  ASSERT_EQ(g_value, 1);
+  ASSERT_EQ(stream.takeOutput(), "");
+
+  g_value = 0;
+  stream.feed("pingx\n");
+  serial.readSerial();
+  const std::string out = stream.takeOutput();
+  ASSERT_TRUE(contains(out, "ERROR: Buffer overflow"));
+  ASSERT_EQ(g_value, 0);
+}
+
 int main() {
   test_runs_command_without_args();
   test_parses_integer_argument();
@@ -215,6 +237,7 @@ int main() {
   test_supports_quoted_string_arg();
   test_runs_subcommand_with_parent_args();
   test_reports_too_many_args();
+  test_handles_small_buffer_boundary_safely();
 
   if (failures > 0) {
     std::cerr << failures << " test(s) failed." << std::endl;

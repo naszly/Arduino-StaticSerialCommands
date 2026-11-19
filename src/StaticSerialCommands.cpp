@@ -74,7 +74,7 @@ void SerialCommands::readSerial() {
         parseCommand(buffer);
         index = 0;
       }
-    } else if (index < bufferSize) {
+    } else if (bufferSize > 0 && index < bufferSize - 1) {
       buffer[index] = ch;
       index++;
     } else {
