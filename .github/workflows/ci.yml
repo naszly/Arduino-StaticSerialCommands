@@ -6,8 +6,19 @@ on:
 
 jobs:
   compile-examples:
-    name: Compile examples
+    name: Compile examples (${{ matrix.name }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Arduino Uno
+            core: arduino:avr
+            fqbn: arduino:avr:uno
+          - name: ESP32
+            core: esp32:esp32
+            fqbn: esp32:esp32:esp32
+            core-index-url: https://espressif.github.io/arduino-esp32/package_esp32_index.json
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -15,17 +26,21 @@ jobs:
       - name: Setup Arduino CLI
         uses: arduino/setup-arduino-cli@v2
 
-      - name: Install Arduino AVR core
+      - name: Install board core
         run: |
+          if [ -n "${{ matrix.core-index-url }}" ]; then
+            arduino-cli config init
+            arduino-cli config add board_manager.additional_urls "${{ matrix.core-index-url }}"
+          fi
           arduino-cli core update-index
-          arduino-cli core install arduino:avr
+          arduino-cli core install ${{ matrix.core }}
 
       - name: Compile all examples
         run: |
           set -euo pipefail
           for sketch in examples/*/*.ino; do
             echo "Compiling ${sketch}"
-            arduino-cli compile --fqbn arduino:avr:uno --library . "${sketch}"
+            arduino-cli compile --fqbn ${{ matrix.fqbn }} --library . "${sketch}"
           done
 
   unit-tests:
