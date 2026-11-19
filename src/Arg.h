@@ -142,12 +142,6 @@ struct ArgConstraint {
       hasRange(false),
       getNamePgmFn(nullptr) {}
 
-  constexpr ArgConstraint(const ArgType type, int32_t minimum, int32_t maximum)
-    : type(type),
-      range(makeRange(type, minimum, maximum)),
-      hasRange(true),
-      getNamePgmFn(nullptr) {}
-
   constexpr ArgConstraint(const ArgType type, double minimum, double maximum)
     : type(type),
       range(makeRange(type, minimum, maximum)),
@@ -158,12 +152,6 @@ struct ArgConstraint {
     : type(type),
       range(makeRange(type, INT32_MIN, INT32_MAX)),
       hasRange(false),
-      getNamePgmFn(getNamePgmFn) {}
-
-  constexpr ArgConstraint(const ArgType type, int32_t minimum, int32_t maximum, PGM_P (*getNamePgmFn)())
-    : type(type),
-      range(makeRange(type, minimum, maximum)),
-      hasRange(true),
       getNamePgmFn(getNamePgmFn) {}
 
   constexpr ArgConstraint(const ArgType type, double minimum, double maximum, PGM_P (*getNamePgmFn)())
