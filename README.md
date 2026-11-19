@@ -243,3 +243,13 @@ SerialCommands serialCommands(
   1000 // 1 second
 );
 ```
+
+## Unit tests
+
+This repository includes host-side unit tests for command parsing behavior in `tests/test_serial_commands.cpp`.
+
+Run tests:
+```bash
+cd tests
+make run
+```
