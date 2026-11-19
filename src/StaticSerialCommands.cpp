@@ -90,9 +90,16 @@ const Command* SerialCommands::findCommand(const char* const string, const Comma
   uint16_t count = 0;
   for (uint16_t i = 0; i < commandsCount; ++i) {
     PGM_P cmd = commands[i].getCommandPgm();
-    if (memcmp_P(string, cmd, len + 1) == 0)
-      return &commands[i];
+    if (memcmp_P(string, cmd, 1) != 0) {
+      continue;
+    }
+
     if (memcmp_P(string, cmd, len) == 0) {
+      char next = '\0';
+      memcpy_P(&next, cmd + len, 1);
+      if (next == '\0') {
+        return &commands[i];
+      }
       ++count;
       index = i;
     }
