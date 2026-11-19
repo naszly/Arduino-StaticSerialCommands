@@ -66,6 +66,7 @@ static int failures = 0;
 static int g_value = 0;
 static std::string g_text;
 static int g_sum = 0;
+static float g_float = 0.0f;
 
 void cmd_ping(SerialCommands&, Args&) {
   g_value = 1;
@@ -77,6 +78,10 @@ void cmd_set_int(SerialCommands&, Args& args) {
 
 void cmd_set_name(SerialCommands&, Args& args) {
   g_text = args[0].getString();
+}
+
+void cmd_set_float(SerialCommands&, Args& args) {
+  g_float = args[0].getFloat();
 }
 
 void cmd_calc(SerialCommands&, Args&) {}
@@ -206,6 +211,50 @@ void test_reports_too_many_args() {
   ASSERT_TRUE(contains(out, "set <int>"));
 }
 
+
+void test_accepts_float_range_constraints() {
+  g_float = 0.0f;
+  FakeStream stream;
+  Command commands[] = {
+    COMMAND(cmd_set_float, "attn", ARG(ArgType::Float, 0.0, 31.75, "Attenuation"), nullptr, ""),
+  };
+  SerialCommands serial(stream, commands, sizeof(commands) / sizeof(Command));
+
+  stream.feed("attn 31.75\n");
+  serial.readSerial();
+  ASSERT_TRUE(g_float > 31.74f && g_float < 31.76f);
+  ASSERT_EQ(stream.takeOutput(), "");
+
+  g_float = 0.0f;
+  stream.feed("attn 32.0\n");
+  serial.readSerial();
+  const std::string out = stream.takeOutput();
+  ASSERT_TRUE(contains(out, "ERROR: Argument out of range 1"));
+  ASSERT_TRUE(contains(out, "attn <Attenuation>"));
+  ASSERT_EQ(g_float, 0.0f);
+}
+
+
+void test_accepts_float_range_constraints_with_int_literals() {
+  g_float = 0.0f;
+  FakeStream stream;
+  Command commands[] = {
+    COMMAND(cmd_set_float, "gain", ARG(ArgType::Float, 0, 31, "Gain"), nullptr, ""),
+  };
+  SerialCommands serial(stream, commands, sizeof(commands) / sizeof(Command));
+
+  stream.feed("gain 30.5\n");
+  serial.readSerial();
+  ASSERT_TRUE(g_float > 30.49f && g_float < 30.51f);
+
+  g_float = 0.0f;
+  stream.feed("gain 31.25\n");
+  serial.readSerial();
+  const std::string out = stream.takeOutput();
+  ASSERT_TRUE(contains(out, "ERROR: Argument out of range 1"));
+  ASSERT_TRUE(contains(out, "gain <Gain>"));
+}
+
 void test_handles_small_buffer_boundary_safely() {
   g_value = 0;
   FakeStream stream;
@@ -237,6 +286,8 @@ int main() {
   test_supports_quoted_string_arg();
   test_runs_subcommand_with_parent_args();
   test_reports_too_many_args();
+  test_accepts_float_range_constraints();
+  test_accepts_float_range_constraints_with_int_literals();
   test_handles_small_buffer_boundary_safely();
 
   if (failures > 0) {

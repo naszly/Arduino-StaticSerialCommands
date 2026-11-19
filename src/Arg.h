@@ -29,10 +29,10 @@ Repository     : https://github.com/naszly/Arduino-StaticSerialCommands
   impl::ArgConstraint(type, impl::ArgConstraint::getNamePgm<GET_STR(name)>)
 
 #define ARG_3(type, min, max) \
-  impl::ArgConstraint(type, impl::ArgConstraint::getRange<min,max>)
+  impl::ArgConstraint(type, min, max)
 
 #define ARG_4(type, min, max, name) \
-  impl::ArgConstraint(type, impl::ArgConstraint::getRange<min,max>, impl::ArgConstraint::getNamePgm<GET_STR(name)>)
+  impl::ArgConstraint(type, min, max, impl::ArgConstraint::getNamePgm<GET_STR(name)>)
 
 #define ARG_X(a0, a1, a2, a3, a4, FUNC, ...)  FUNC
 
@@ -104,30 +104,77 @@ class Args {
 
 namespace impl {
 
-struct Range {
-  constexpr Range(int32_t minimum, int32_t maximum) : minimum(minimum), maximum(maximum) {}
+struct IntRange {
+  constexpr IntRange(int32_t minimum, int32_t maximum)
+    : minimum(minimum), maximum(maximum) {}
+
   int32_t minimum;
   int32_t maximum;
 };
 
+struct FloatRange {
+  constexpr FloatRange(float minimum, float maximum)
+    : minimum(minimum), maximum(maximum) {}
+
+  float minimum;
+  float maximum;
+};
+
+union Range {
+  constexpr Range() : intRange(INT32_MIN, INT32_MAX) {}
+  constexpr Range(const IntRange& range) : intRange(range) {}
+  constexpr Range(const FloatRange& range) : floatRange(range) {}
+
+  IntRange intRange;
+  FloatRange floatRange;
+};
+
 struct ArgConstraint {
   ArgConstraint()
-    : type(ArgType::Null), getRangeFn(nullptr), getNamePgmFn(nullptr) {}
+    : type(ArgType::Null),
+      range(makeRange(ArgType::Int, INT32_MIN, INT32_MAX)),
+      hasRange(false),
+      getNamePgmFn(nullptr) {}
 
   constexpr ArgConstraint(const ArgType type)
-    : type(type), getRangeFn(nullptr), getNamePgmFn(nullptr) {}
+    : type(type),
+      range(makeRange(type, INT32_MIN, INT32_MAX)),
+      hasRange(false),
+      getNamePgmFn(nullptr) {}
 
-  constexpr ArgConstraint(const ArgType type, Range (*getRangeFn)())
-    : type(type), getRangeFn(getRangeFn), getNamePgmFn(nullptr) {}
+  constexpr ArgConstraint(const ArgType type, int32_t minimum, int32_t maximum)
+    : type(type),
+      range(makeRange(type, minimum, maximum)),
+      hasRange(true),
+      getNamePgmFn(nullptr) {}
+
+  constexpr ArgConstraint(const ArgType type, double minimum, double maximum)
+    : type(type),
+      range(makeRange(type, minimum, maximum)),
+      hasRange(true),
+      getNamePgmFn(nullptr) {}
 
   constexpr ArgConstraint(const ArgType type, PGM_P (*getNamePgmFn)())
-    : type(type), getRangeFn(nullptr), getNamePgmFn(getNamePgmFn) {}
+    : type(type),
+      range(makeRange(type, INT32_MIN, INT32_MAX)),
+      hasRange(false),
+      getNamePgmFn(getNamePgmFn) {}
 
-  constexpr ArgConstraint(const ArgType type, Range (*getRangeFn)(), PGM_P (*getNamePgmFn)())
-    : type(type), getRangeFn(getRangeFn), getNamePgmFn(getNamePgmFn) {}
+  constexpr ArgConstraint(const ArgType type, int32_t minimum, int32_t maximum, PGM_P (*getNamePgmFn)())
+    : type(type),
+      range(makeRange(type, minimum, maximum)),
+      hasRange(true),
+      getNamePgmFn(getNamePgmFn) {}
+
+  constexpr ArgConstraint(const ArgType type, double minimum, double maximum, PGM_P (*getNamePgmFn)())
+    : type(type),
+      range(makeRange(type, minimum, maximum)),
+      hasRange(true),
+      getNamePgmFn(getNamePgmFn) {}
 
   ArgType type;
-  Range (*getRangeFn)();
+  Range range;
+  bool hasRange;
   PGM_P (*getNamePgmFn)();
 
   PGM_P getNamePgm() const {
@@ -139,25 +186,26 @@ struct ArgConstraint {
   }
 
   bool isInRange(Arg arg) {
-    if (getRangeFn) {
-      Range range = (*getRangeFn)();
-      switch (arg.getType()) {
-        case ArgType::Int:
-          return arg.getInt() >= range.minimum && arg.getInt() <= range.maximum;
-        case ArgType::Float:
-          return arg.getFloat() >= range.minimum && arg.getFloat() <= range.maximum;
-        default:
-          return true;
-      }
+    if (!hasRange) {
+      return true;
     }
-    return true;
+
+    switch (type) {
+      case ArgType::Float:
+        return arg.getFloat() >= range.floatRange.minimum && arg.getFloat() <= range.floatRange.maximum;
+      case ArgType::Int:
+        return arg.getInt() >= range.intRange.minimum && arg.getInt() <= range.intRange.maximum;
+      default:
+        return true;
+    }
   }
 
   Range getRange() {
-    if (getRangeFn) {
-      return (*getRangeFn)();
+    if (hasRange) {
+      return range;
     }
-    return Range(INT32_MIN, INT32_MAX);
+
+    return makeRange(type, INT32_MIN, INT32_MAX);
   }
 
   static PGM_P getTypeNamePgm(ArgType type) {
@@ -175,11 +223,18 @@ struct ArgConstraint {
     return _name;
   }
 
-  template<int32_t min, int32_t max>
-  static Range getRange() {
-    return Range(min, max);
+  private:
+  static constexpr Range makeRange(ArgType type, int32_t minimum, int32_t maximum) {
+    return type == ArgType::Float
+      ? Range(FloatRange((float)minimum, (float)maximum))
+      : Range(IntRange(minimum, maximum));
   }
 
+  static constexpr Range makeRange(ArgType type, double minimum, double maximum) {
+    return type == ArgType::Float
+      ? Range(FloatRange((float)minimum, (float)maximum))
+      : Range(IntRange((int32_t)minimum, (int32_t)maximum));
+  }
 };
 
 }

@@ -134,9 +134,15 @@ void SerialCommands::parseCommand(char* string) {
             serial.print(argIndex + 1);
             impl::Range range = argc.getRange();
             serial.print(F(" ("));
-            serial.print(range.minimum);
-            serial.print(F(" - "));
-            serial.print(range.maximum);
+            if (argc.type == ArgType::Float) {
+              serial.print(range.floatRange.minimum);
+              serial.print(F(" - "));
+              serial.print(range.floatRange.maximum);
+            } else {
+              serial.print(range.intRange.minimum);
+              serial.print(F(" - "));
+              serial.print(range.intRange.maximum);
+            }
             serial.println(')');
             printCommand(*cmd);
             serial.println();
