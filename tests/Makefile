@@ -1,5 +1,5 @@
 CXX ?= g++
-CXXFLAGS ?= -std=gnu++20 -Wall -Wextra -fpermissive -Isupport -I../src
+CXXFLAGS ?= -std=gnu++20 -Wall -Wextra -Werror -Isupport -I../src
 
 all: run
 

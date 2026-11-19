@@ -61,7 +61,7 @@ class Command {
     }
 
     const impl::ArgConstraint* getArgsPgm(uint8_t* count) const {
-      impl::ArgConstraint* (*_getArgsPgmFn)(PGM_VOID_P, uint8_t*) = pgm_read_word(&(_command->getArgsPgmFn));
+      const impl::ArgConstraint* (*_getArgsPgmFn)(PGM_VOID_P, uint8_t*) = pgm_read_word(&(_command->getArgsPgmFn));
       return (*_getArgsPgmFn)(_command, count);
     }
 
@@ -73,7 +73,7 @@ class Command {
     }
 
     void getSubCommands(const Command** commands, uint16_t* count) const {
-      *commands = pgm_read_word(&(_command->subcommands));
+      *commands = reinterpret_cast<const Command*>(pgm_read_word(&(_command->subcommands)));
       *count = pgm_read_word(&(_command->subcommandsCount));
     }
 

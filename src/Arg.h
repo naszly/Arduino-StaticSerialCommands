@@ -126,7 +126,7 @@ struct ArgConstraint {
   constexpr ArgConstraint(const ArgType type, Range (*getRangeFn)(), PGM_P (*getNamePgmFn)())
     : type(type), getRangeFn(getRangeFn), getNamePgmFn(getNamePgmFn) {}
 
-  const ArgType type;
+  ArgType type;
   Range (*getRangeFn)();
   PGM_P (*getNamePgmFn)();
 
