@@ -166,7 +166,7 @@ struct ArgConstraint {
     static const char _float[] PROGMEM = "float";
     static const char _string[] PROGMEM = "string";
     static const char* const types[] PROGMEM{ _null, _int, _float, _string };
-    return (PGM_P) pgm_read_word(&(types[(int) type]));
+    return reinterpret_cast<PGM_P>(pgm_read_ptr(&(types[(int) type])));
   }
 
   template<char... chars>

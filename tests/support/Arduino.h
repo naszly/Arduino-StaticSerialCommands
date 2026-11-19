@@ -28,6 +28,11 @@ inline T pgm_read_word(const T* ptr) {
   return *ptr;
 }
 
+template <typename T>
+inline T pgm_read_ptr(const T* ptr) {
+  return *ptr;
+}
+
 extern uint64_t __test_millis;
 inline uint64_t millis() {
   return __test_millis;

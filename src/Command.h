@@ -51,29 +51,29 @@ class Command {
       : _command((const impl::Command<>*)command), parent((const impl::Command<>*)parent) {}
 
     PGM_P getCommandPgm() const {
-      PGM_P (*_getCommandPgmFn)(PGM_VOID_P) = pgm_read_word(&(_command->getCommandPgmFn));
+      PGM_P (*_getCommandPgmFn)(PGM_VOID_P) = reinterpret_cast<PGM_P (*)(PGM_VOID_P)>(pgm_read_ptr(&(_command->getCommandPgmFn)));
       return (*_getCommandPgmFn)(_command);
     }
 
     PGM_P getDescriptionPgm() const {
-      PGM_P (*_getDescriptionPgmFn)(PGM_VOID_P) = pgm_read_word(&(_command->getDescriptionPgmFn));
+      PGM_P (*_getDescriptionPgmFn)(PGM_VOID_P) = reinterpret_cast<PGM_P (*)(PGM_VOID_P)>(pgm_read_ptr(&(_command->getDescriptionPgmFn)));
       return (*_getDescriptionPgmFn)(_command);
     }
 
     const impl::ArgConstraint* getArgsPgm(uint8_t* count) const {
-      const impl::ArgConstraint* (*_getArgsPgmFn)(PGM_VOID_P, uint8_t*) = pgm_read_word(&(_command->getArgsPgmFn));
+      const impl::ArgConstraint* (*_getArgsPgmFn)(PGM_VOID_P, uint8_t*) = reinterpret_cast<const impl::ArgConstraint* (*)(PGM_VOID_P, uint8_t*)>(pgm_read_ptr(&(_command->getArgsPgmFn)));
       return (*_getArgsPgmFn)(_command, count);
     }
 
     void runCommand(SerialCommands &sender, Args &args) const {
-      void (*function)(SerialCommands&, Args&) = pgm_read_word(&(_command->function));
+      void (*function)(SerialCommands&, Args&) = reinterpret_cast<void (*)(SerialCommands&, Args&)>(pgm_read_ptr(&(_command->function)));
       if (function) {
         (*function)(sender, args);
       }
     }
 
     void getSubCommands(const Command** commands, uint16_t* count) const {
-      *commands = reinterpret_cast<const Command*>(pgm_read_word(&(_command->subcommands)));
+      *commands = reinterpret_cast<const Command*>(pgm_read_ptr(&(_command->subcommands)));
       *count = pgm_read_word(&(_command->subcommandsCount));
     }
 
