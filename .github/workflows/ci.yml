@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  compile-examples:
+    name: Compile examples
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Arduino CLI
+        uses: arduino/setup-arduino-cli@v2
+
+      - name: Install Arduino AVR core
+        run: |
+          arduino-cli core update-index
+          arduino-cli core install arduino:avr
+
+      - name: Compile all examples
+        run: |
+          set -euo pipefail
+          for sketch in examples/*/*.ino; do
+            echo "Compiling ${sketch}"
+            arduino-cli compile --fqbn arduino:avr:uno --library . "${sketch}"
+          done
+
+  unit-tests:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run host-side tests
+        run: make -C tests run
