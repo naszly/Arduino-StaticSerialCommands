@@ -67,6 +67,7 @@ static int g_value = 0;
 static std::string g_text;
 static int g_sum = 0;
 static float g_float = 0.0f;
+static int g_value2 = 0;
 
 void cmd_ping(SerialCommands&, Args&) {
   g_value = 1;
@@ -82,6 +83,14 @@ void cmd_set_name(SerialCommands&, Args& args) {
 
 void cmd_set_float(SerialCommands&, Args& args) {
   g_float = args[0].getFloat();
+}
+
+void cmd_mark_2(SerialCommands&, Args&) {
+  g_value2 = 2;
+}
+
+void cmd_mark_3(SerialCommands&, Args&) {
+  g_value2 = 3;
 }
 
 void cmd_calc(SerialCommands&, Args&) {}
@@ -255,6 +264,129 @@ void test_accepts_float_range_constraints_with_int_literals() {
   ASSERT_TRUE(contains(out, "gain <Gain>"));
 }
 
+
+void test_allows_unique_prefix_matching() {
+  g_value2 = 0;
+  FakeStream stream;
+  Command commands[] = {
+    COMMAND(cmd_mark_2, "ping"),
+    COMMAND(cmd_mark_3, "pong"),
+  };
+  SerialCommands serial(stream, commands, sizeof(commands) / sizeof(Command));
+
+  stream.feed("pi\n");
+  serial.readSerial();
+
+  ASSERT_EQ(g_value2, 2);
+  ASSERT_EQ(stream.takeOutput(), "");
+}
+
+void test_rejects_ambiguous_prefix_matching() {
+  g_value2 = 0;
+  FakeStream stream;
+  Command commands[] = {
+    COMMAND(cmd_mark_2, "start"),
+    COMMAND(cmd_mark_3, "status"),
+  };
+  SerialCommands serial(stream, commands, sizeof(commands) / sizeof(Command));
+
+  stream.feed("sta\n");
+  serial.readSerial();
+
+  ASSERT_EQ(g_value2, 0);
+  const std::string out = stream.takeOutput();
+  ASSERT_TRUE(contains(out, "ERROR: Command does not exist \"sta\""));
+}
+
+void test_prefers_exact_match_over_prefix() {
+  g_value2 = 0;
+  FakeStream stream;
+  Command commands[] = {
+    COMMAND(cmd_mark_2, "set"),
+    COMMAND(cmd_mark_3, "setup"),
+  };
+  SerialCommands serial(stream, commands, sizeof(commands) / sizeof(Command));
+
+  stream.feed("set\n");
+  serial.readSerial();
+
+  ASSERT_EQ(g_value2, 2);
+  ASSERT_EQ(stream.takeOutput(), "");
+}
+
+void test_supports_custom_delimiter_char() {
+  g_value = 0;
+  FakeStream stream;
+  Command commands[] = {
+    COMMAND(cmd_set_int, "set", ArgType::Int, nullptr, ""),
+  };
+  SerialCommands serial(stream, commands, sizeof(commands) / sizeof(Command));
+  serial.setDelimiterChars<','>();
+
+  stream.feed("set,19\n");
+  serial.readSerial();
+
+  ASSERT_EQ(g_value, 19);
+  ASSERT_EQ(stream.takeOutput(), "");
+}
+
+void test_supports_custom_termination_char() {
+  g_value = 0;
+  FakeStream stream;
+  Command commands[] = {
+    COMMAND(cmd_ping, "ping"),
+  };
+  SerialCommands serial(stream, commands, sizeof(commands) / sizeof(Command));
+  serial.setTerminationChars<';'>();
+
+  stream.feed("ping;");
+  serial.readSerial();
+
+  ASSERT_EQ(g_value, 1);
+  ASSERT_EQ(stream.takeOutput(), "");
+}
+
+void test_timeout_clears_partial_command() {
+  g_value = 0;
+  __test_millis = 1000;
+  FakeStream stream;
+  char buffer[16];
+  Command commands[] = {
+    COMMAND(cmd_ping, "ping"),
+  };
+  SerialCommands serial(stream, commands, sizeof(commands) / sizeof(Command), buffer, sizeof(buffer), 50);
+
+  stream.feed("pi");
+  serial.readSerial();
+
+  __test_millis = 1200;
+  stream.feed("ng\n");
+  serial.readSerial();
+
+  ASSERT_EQ(g_value, 0);
+  const std::string out = stream.takeOutput();
+  ASSERT_TRUE(contains(out, "ERROR: Command does not exist \"ng\""));
+}
+
+void test_recovers_after_buffer_overflow() {
+  g_value = 0;
+  FakeStream stream;
+  char buffer[5];
+  Command commands[] = {
+    COMMAND(cmd_ping, "ping"),
+  };
+  SerialCommands serial(stream, commands, sizeof(commands) / sizeof(Command), buffer, sizeof(buffer));
+
+  stream.feed("pingx\n");
+  serial.readSerial();
+  ASSERT_TRUE(contains(stream.takeOutput(), "ERROR: Buffer overflow"));
+
+  stream.feed("ping\n");
+  serial.readSerial();
+  ASSERT_EQ(g_value, 1);
+  ASSERT_EQ(stream.takeOutput(), "");
+}
+
 void test_handles_small_buffer_boundary_safely() {
   g_value = 0;
   FakeStream stream;
@@ -288,6 +420,13 @@ int main() {
   test_reports_too_many_args();
   test_accepts_float_range_constraints();
   test_accepts_float_range_constraints_with_int_literals();
+  test_allows_unique_prefix_matching();
+  test_rejects_ambiguous_prefix_matching();
+  test_prefers_exact_match_over_prefix();
+  test_supports_custom_delimiter_char();
+  test_supports_custom_termination_char();
+  test_timeout_clears_partial_command();
+  test_recovers_after_buffer_overflow();
   test_handles_small_buffer_boundary_safely();
 
   if (failures > 0) {
